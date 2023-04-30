@@ -59,6 +59,38 @@ function parseCommentTag(comment) {
   return commentTag;
 }
 
+function maybeFindComment(gcode) {
+  // Split the gcode by the first semicolon it sees
+  const commentSemicolonSplits = gcode.split(';');
+
+  if (commentSemicolonSplits.length === 1) {
+    const commentBracketSplits = gcode.split("(");
+
+    if (commentBracketSplits.length === 1) {
+      return {
+        gcodeWithoutComment: gcode,
+        comment: undefined,
+        commentTag: undefined
+      };
+    } else {
+      const comment = commentBracketSplits[1].split(")")[0];
+
+      return {
+        gcodeWithoutComment: commentBracketSplits[0],
+        comment,
+        commentTag: undefined
+      };
+    }
+  } else {
+    const comment = commentSemicolonSplits.slice(1).join(';');
+    return {
+      gcodeWithoutComment: commentSemicolonSplits[0],
+      comment,
+      commentTag: parseCommentTag(comment)
+    };
+  }
+}
+
 /*
  * Parses a line of GCode and returns an object
  * Expects a single line of gcode
@@ -73,13 +105,10 @@ function gcodeToObject(gcode) {
   // Constructing a blank gcode object, with functions
   const gcodeObject = new GcodeObject();
 
-  // Split the gcode by the first semicolon it sees
-  const commentSplits = gcode.split(';');
-  const gcodeWithoutComment = commentSplits[0];
-  if (commentSplits.length > 1) {
-    const comment = commentSplits.slice(1).join(';');
+  const { gcodeWithoutComment, comment, commentTag } = maybeFindComment(gcode);
+  if (comment) {
     gcodeObject.comment = comment;
-    gcodeObject.commentTag = parseCommentTag(comment);
+    gcodeObject.commentTag = commentTag;
   }
 
   // If we can find a command, assign it, otherwise keep the "command" value set to undefined
