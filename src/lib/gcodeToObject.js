@@ -112,11 +112,15 @@ function gcodeToObject(gcode) {
   }
 
   // If we can find a command, assign it, otherwise keep the "command" value set to undefined
-  const commandRegex = /[GM]\d+/;
+  const commandRegex = /[GMT]\d+/;
   const commandResult = gcodeWithoutComment.toUpperCase().match(commandRegex);
   gcodeObject.command = (commandResult !== undefined || commandResult !== null) &&
   Array.isArray(commandResult) && commandResult.length > 0 ?
   commandResult[0] : undefined;
+
+  if (gcodeObject.command && gcodeObject.command.startsWith("T")) {
+    gcodeObject.command = "T";
+  }
 
   // Set the gcode to lower case and remove any G<number> or M<number> commands
   const gcodeArgString = gcodeWithoutComment.toLowerCase().replace(/[gm]\d+/, '');
